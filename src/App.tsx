@@ -21,13 +21,15 @@ async function apiCall(url: string, callback: Dispatch<SetStateAction<any>>) {
 enum Status {
   FETCHING = "Fetching",
   FAILED = "Failed",
-  RUNNING = "RUNNING"
+  RUNNING = "RUNNING",
+  TERMINATED = "TERMINATED"
 }
 
 const buttonText = {
   [Status.FETCHING]: "...",
   [Status.FAILED]: "Failed to get status",
   [Status.RUNNING]: "Server already running...",
+  [Status.TERMINATED]: "Start server",
 }
 
 function App() {
@@ -47,7 +49,6 @@ function App() {
     updateStats();
   }, []);
 
-  const DEFAULT_BUTTON_TEXT = "Start server";
   return (
     <div className="App">
       <header className="App-header">
@@ -68,7 +69,7 @@ function App() {
               });
           }}
         >
-          {buttonText[status] || DEFAULT_BUTTON_TEXT}
+          {buttonText[status]}
         </button>
         <p>Server status: {status}</p>
         <p>Players connected: {playerCount}</p>
