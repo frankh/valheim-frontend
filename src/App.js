@@ -10,7 +10,7 @@ function apiCall(url, callback) {
   })
     .then((resp) => {
       if (resp.ok) {
-        resp.text();
+        return resp.text();
       }
     })
     .then((resp) => {
