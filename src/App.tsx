@@ -1,30 +1,40 @@
-import React, { useEffect, useState } from "react";
+import React, { Dispatch, SetStateAction, useEffect, useState } from "react";
 import logo from "./valheim_transparent.png";
 import "./App.css";
 
 const baseUrl = "http://localhost:3001/api";
 
-function apiCall(url, callback) {
-  return fetch(url, {
-    method: "POST",
-  })
-    .then((resp) => {
-      if (resp.ok) {
-        return resp.text();
-      }
-    })
-    .then((resp) => {
-      callback(resp);
-    })
-    .catch(() => {
-      callback("Failed");
+async function apiCall(url: string, callback: Dispatch<SetStateAction<any>>) {
+  try {
+    const response = await fetch(url, {
+      method: "POST",
     });
+    if (response.ok) {
+      const text = await response.text();
+      return callback(text)
+    }
+  } catch (e) {
+    return callback("Failed")
+  }
+}
+
+enum Status {
+  FETCHING = "Fetching",
+  FAILED = "Failed",
+  RUNNING = "RUNNING"
+}
+
+const buttonText = {
+  [Status.FETCHING]: "...",
+  [Status.FAILED]: "Failed to get status",
+  [Status.RUNNING]: "Server already running...",
 }
 
 function App() {
-  const [status, updateStatus] = useState("Fetching");
-  const [players, updatePlayerList] = useState("Loading");
-  const [playerCount, updatePlayerCount] = useState("Loading");
+  const [status, updateStatus] = useState<Status>(Status.FETCHING);
+  const [players, updatePlayerList] = useState<string>("Loading");
+  const [playerCount, updatePlayerCount] = useState<string>("Loading");
+
   const updateStats = async () => {
     return Promise.all([
       apiCall(`${baseUrl}/status`, updateStatus),
@@ -32,35 +42,21 @@ function App() {
       apiCall(`${baseUrl}/recent`, updatePlayerList),
     ]);
   };
+
   useEffect(() => {
     updateStats();
   }, []);
-  let buttonText;
-  switch (status) {
-    case "Fetching":
-      buttonText = "...";
-      break;
-    case "Failed":
-      buttonText = "Failed to get status";
-      break;
-    case "RUNNING":
-      buttonText = "Server already running...";
-      break;
-    default:
-      buttonText = "Start server";
-      break;
-  }
+
+  const DEFAULT_BUTTON_TEXT = "Start server";
   return (
     <div className="App">
       <header className="App-header">
         <img src={logo} alt="Valheim logo" />
         <button
           className="button"
-          disabled={
-            status === "RUNNING" || status === "Failed" || status === "Fetching"
-          }
+          disabled={Object.values(Status).includes(status)}
           onClick={() => {
-            updateStatus("Fetching");
+            updateStatus(Status.FETCHING);
             fetch(`${baseUrl}/start`, {
               method: "POST",
             })
@@ -72,7 +68,7 @@ function App() {
               });
           }}
         >
-          {buttonText}
+          {buttonText[status] || DEFAULT_BUTTON_TEXT}
         </button>
         <p>Server status: {status}</p>
         <p>Players connected: {playerCount}</p>
